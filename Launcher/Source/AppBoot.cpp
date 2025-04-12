@@ -3,6 +3,8 @@
 #include "Platform/Utils.h"
 #include "Platform/Process.h"
 
+#include "GameSettings.h"
+
 #include "imgui.h"
 #include "imgui_internal.h"
 #include "imgui_impl_sdl2.h"
@@ -56,8 +58,8 @@ public:
 
 		T2Render::WindowParams windowParams;
 		windowParams.pchTitle    = "Barnyard Launcher";
-		windowParams.uiWidth     = 800;
-		windowParams.uiHeight    = 600;
+		windowParams.uiWidth     = 500;
+		windowParams.uiHeight    = 250;
 		windowParams.bIsWindowed = TTRUE;
 
 		T2Render* pRender        = T2Render::CreateSingleton();
@@ -74,7 +76,7 @@ public:
 		io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
 		io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
 
-		io.Fonts->AddFontFromFileTTF( "Bahnschrift.ttf", 18.0f, TNULL, io.Fonts->GetGlyphRangesDefault() );
+		io.Fonts->AddFontFromFileTTF( "Bahnschrift.ttf", 17.0f, TNULL, io.Fonts->GetGlyphRangesDefault() );
 
 		// Setup Dear ImGui style
 		ImGui::StyleColorsDark();
@@ -155,6 +157,14 @@ public:
 		ImGui_ImplSDL2_InitForOpenGL( pWindow->GetNativeWindow(), pRender->GetGLContext() );
 		ImGui_ImplOpenGL3_Init( "#version 130" );
 
+		// Check if there's a modloader EXE file in this directory
+		if ( TFile* pGameExe = TFile::Create( ".\\BYardModLoader.exe", TFILEMODE_READ ) )
+		{
+			m_bHasGame = TTRUE;
+
+			pGameExe->Destroy();
+		}
+
 		return bWindowCreated;
 	}
 
@@ -219,13 +229,43 @@ public:
 			ImGui::SetNextWindowDockID( dockspaceId );
 			ImGui::Begin( "Main Window", TNULL, ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove );
 			{
-				if ( ImGui::Button( "Play" ) )
+				if ( !m_bHasGame )
 				{
-					Process gameProcess;
-
-					gameProcess.Create( L"D:\\Barnyard\\Game (ND)\\BYardModLoader.exe", TNULL, L"D:\\Barnyard\\Game (ND)\\" );
+					ImGui::PushStyleColor( ImGuiCol_Text, ImVec4( 1.0f, 0.0f, 0.0f, 1.00f ) );
+					ImGui::Text( "Error: No game found! Make sure the launcher is in the correct directory!" );
+					ImGui::PopStyleColor();
 				}
 
+				ImGui::Text( "Game Settings" );
+
+				ImGui::BeginDisabled( !m_bHasGame );
+				{
+					ImGui::Checkbox( "Experimental Mode", &g_oSettings.bExperimental );
+					ImGui::Checkbox( "Fun%", &g_oSettings.bFun );
+
+					if ( ImGui::Button( "Start Game" ) )
+					{
+						// Create a string with all launch parameters
+						T2FormatWString512 strStartParams;
+						{
+							if ( g_oSettings.bExperimental )
+								strStartParams.Append( L"-experimental " );
+
+							if ( g_oSettings.bFun )
+								strStartParams.Append( L"-fun " );
+						}
+
+						Process gameProcess;
+						gameProcess.Create(
+						    L".\\BYardModLoader.exe",
+						    strStartParams.Get(),
+						    L".\\"
+						);
+					}
+
+					ImGui::EndDisabled();
+				}
+				
 				ImGui::End();
 			}
 
@@ -254,6 +294,9 @@ public:
 
 		return TTRUE;
 	}
+
+private:
+	TBOOL m_bHasGame = TFALSE;
 
 } g_oTheApp;
 
