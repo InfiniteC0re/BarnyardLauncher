@@ -60,6 +60,9 @@ void GameSettings::Load()
 				bExperimental = pSettings->bExperimental;
 				bFun          = pSettings->bFun;
 				bDXVK         = pSettings->bDXVK;
+				bWindowed     = pSettings->bWindowed;
+				iWidth        = pSettings->iWidth;
+				iHeight       = pSettings->iHeight;
 				break;
 			default:
 				TINFO( "The settings file's version is not supported!\n" );

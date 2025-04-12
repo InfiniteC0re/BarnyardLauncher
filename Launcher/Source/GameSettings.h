@@ -9,7 +9,10 @@ struct GameSettingsProperties
 	// Version 1:
 	TBOOL bExperimental = TFALSE;
 	TBOOL bFun          = TFALSE;
+	TBOOL bWindowed     = TFALSE;
 	TBOOL bDXVK         = TTRUE;
+	TINT  iWidth        = 0;
+	TINT  iHeight       = 0;
 };
 
 inline struct GameSettings

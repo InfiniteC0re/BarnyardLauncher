@@ -4,6 +4,7 @@
 #include "Platform/Process.h"
 
 #include "GameSettings.h"
+#include "Hash.h"
 
 #include "imgui.h"
 #include "imgui_internal.h"
@@ -59,7 +60,7 @@ public:
 		T2Render::WindowParams windowParams;
 		windowParams.pchTitle    = "Barnyard Launcher";
 		windowParams.uiWidth     = 500;
-		windowParams.uiHeight    = 250;
+		windowParams.uiHeight    = 260;
 		windowParams.bIsWindowed = TTRUE;
 
 		T2Render* pRender        = T2Render::CreateSingleton();
@@ -165,7 +166,32 @@ public:
 			pGameExe->Destroy();
 		}
 
+		// Do other preparation things...
+		ObtainAllScreenResolutions();
+
 		return bWindowCreated;
+	}
+
+	void ObtainAllScreenResolutions()
+	{
+		TINT iDisplayIndex    = 0;
+		TINT iNumDisplayModes = SDL_GetNumDisplayModes( iDisplayIndex );
+
+		T2Map<TUINT32, TBOOL> mapResolutions;
+		for ( TINT i = 0; i < iNumDisplayModes; i++ )
+		{
+			SDL_DisplayMode displayMode;
+			SDL_GetDisplayMode( iDisplayIndex, i, &displayMode );
+
+			TUINT32 uiHash = Hash_Vec2i( displayMode.w, displayMode.h );
+			if ( mapResolutions.Find( uiHash ) == mapResolutions.End() )
+			{
+				TINFO( "Found new screen resolution (%dx%d)\n", displayMode.w, displayMode.h );
+
+				m_vecResolutions.PushBack( std::move( TString8::VarArgs( "%dx%d", displayMode.w, displayMode.h ) ) );
+				mapResolutions.Insert( uiHash, TTRUE );
+			}
+		}
 	}
 
 	virtual TBOOL OnUpdate( TFLOAT flDeltaTime ) OVERRIDE
@@ -240,14 +266,55 @@ public:
 
 				ImGui::BeginDisabled( !m_bHasGame );
 				{
+					if ( ImGui::BeginCombo( "Resolution", m_vecResolutions[ m_iSelectedResolution ] ) )
+					{
+						T2_FOREACH( m_vecResolutions, it )
+						{
+							TBOOL bSelected = ( it.Index() == m_iSelectedResolution );
+
+							if ( ImGui::Selectable( it.Get()->GetString(), &bSelected ) )
+								m_iSelectedResolution = it.Index();
+
+							if ( bSelected )
+								ImGui::SetItemDefaultFocus();
+						}
+
+						ImGui::EndCombo();
+					}
+
+					ImGui::Checkbox( "Windowed Mode", &g_oSettings.bWindowed );
+					ImGui::Separator();
+
+					ImGui::Text( "Modloader" );
 					ImGui::Checkbox( "Experimental Mode", &g_oSettings.bExperimental );
 					ImGui::Checkbox( "Fun%", &g_oSettings.bFun );
 
-					if ( ImGui::Button( "Start Game" ) )
+					if ( ImGui::Button( "Play Game" ) )
 					{
 						// Create a string with all launch parameters
 						T2FormatWString512 strStartParams;
 						{
+							// Resolution
+							strStartParams.Append( g_oSettings.bWindowed ? L"-windowed " : L"-fullscreen " );
+
+							const TString8& strResolution = m_vecResolutions[ m_iSelectedResolution ];
+							TINT iDivider = strResolution.Find( 'x' );
+
+							if ( iDivider != -1 )
+							{
+								TString8 strWidth  = strResolution.Mid( 0, iDivider );
+								TString8 strHeight = strResolution.Right( iDivider + 1 );
+
+								TINT iWidth  = T2String8::StringToInt( strWidth );
+								TINT iHeight = T2String8::StringToInt( strHeight );
+
+								T2FormatWString128 resolutionParams;
+								resolutionParams.Format( L"-width %d -height %d ", iWidth, iHeight );
+
+								strStartParams.Append( resolutionParams.Get() );
+							}
+
+							// Other parameters
 							if ( g_oSettings.bExperimental )
 								strStartParams.Append( L"-experimental " );
 
@@ -296,7 +363,9 @@ public:
 	}
 
 private:
-	TBOOL m_bHasGame = TFALSE;
+	TBOOL                     m_bHasGame = TFALSE;
+	T2DynamicVector<TString8> m_vecResolutions;
+	TINT                      m_iSelectedResolution;
 
 } g_oTheApp;
 
