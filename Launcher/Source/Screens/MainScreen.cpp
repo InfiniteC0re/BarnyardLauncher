@@ -1,5 +1,6 @@
 #include "pch.h"
 #include "MainScreen.h"
+#include "ModsScreen.h"
 #include "Application.h"
 #include "UIScreenControl.h"
 #include "GameSettings.h"
@@ -82,8 +83,9 @@ void MainScreen::Render()
 			Button_Settings();
 
 		ImGui::SameLine();
-		ImGui::Button( "MANAGE MODS" );
-
+		
+		if ( ImGui::Button( "MANAGE MODS" ) )
+			Button_Mods();
 
 		ImGui::SameLine();
 		if ( ImGui::Button( "TOGGLE STATE" ) )
@@ -154,4 +156,10 @@ void MainScreen::Button_Settings()
 	g_oUIControl.ShowScreen( pMainScreen );
 
 	g_oSettings.Save();
+}
+
+void MainScreen::Button_Mods()
+{
+	ModsScreen* pScreen = new ModsScreen();
+	g_oUIControl.ShowScreen( pScreen );
 }

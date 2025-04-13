@@ -1,5 +1,6 @@
 #include "pch.h"
 #include "Application.h"
+#include "ModManager.h"
 #include "Screens/UIScreenControl.h"
 #include "Screens/MainScreen.h"
 
@@ -182,6 +183,7 @@ TBOOL Application::OnCreate( TINT argc, TCHAR** argv )
 	LoadResources();
 	ObtainAllScreenResolutions();
 
+	ModManager::ScanForMods();
 	g_oSettings.Load();
 
 	return bWindowCreated;

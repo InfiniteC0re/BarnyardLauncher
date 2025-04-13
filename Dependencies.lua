@@ -14,6 +14,7 @@ IncludeDir.glew = "%{wks.location}/OpenBarnyard/Toshi/Vendor/glew/include"
 IncludeDir.sdl2 = "%{wks.location}/OpenBarnyard/Toshi/Vendor/sdl2/include"
 IncludeDir.curl = "%{wks.location}/OpenBarnyard/Toshi/Vendor/curl/include"
 IncludeDir.toshi = "%{wks.location}/OpenBarnyard/Toshi/Source"
+IncludeDir.modcore = "%{wks.location}/OpenBarnyard/SDK/BYModCore/Include"
 IncludeDir.imgui = "%{wks.location}/ThirdParty/ImGui"
 
 LibDir = {}

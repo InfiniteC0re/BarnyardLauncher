@@ -16,6 +16,7 @@ public:
 private:
 	void Button_PlayGame();
 	void Button_Settings();
+	void Button_Mods();
 
 private:
 	TBOOL m_bEnableGameButtons = TFALSE;

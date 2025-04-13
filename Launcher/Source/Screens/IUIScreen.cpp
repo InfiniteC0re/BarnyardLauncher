@@ -15,6 +15,7 @@ IUIScreen::IUIScreen()
 
 IUIScreen::~IUIScreen()
 {
+	ImGui::GetStyle().Alpha = 1.0f;
 }
 
 void IUIScreen::Render()
