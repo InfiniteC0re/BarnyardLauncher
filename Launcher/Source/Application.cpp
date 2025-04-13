@@ -44,12 +44,12 @@ int main( int argc, char** argv )
 {
 	// Initialise engine
 	TUtil::TOSHIParams engineParams;
-	engineParams.szLogAppName  = "TRV";
-	engineParams.szLogFileName = "tresourceviewer";
+	engineParams.szLogAppName  = "launcher";
+	engineParams.szLogFileName = "Launcher";
 	engineParams.szCommandLine = GetCommandLineA();
 
 	TUtil::ToshiCreate( engineParams );
-	g_oTheApp.Create( "Toshi Resource Viewer", argc, argv );
+	g_oTheApp.Create( "BYardLauncher", argc, argv );
 	g_oTheApp.Execute();
 
 	//TUtil::ToshiDestroy();
@@ -181,7 +181,6 @@ TBOOL Application::OnCreate( TINT argc, TCHAR** argv )
 
 	// Do other preparation things...
 	LoadResources();
-	ObtainAllScreenResolutions();
 
 	ModManager::ScanForMods();
 	g_oSettings.Load();
@@ -201,28 +200,6 @@ void Application::LoadResources()
 		glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR );
 
 		stbi_image_free( pImageData );
-	}
-}
-
-void Application::ObtainAllScreenResolutions()
-{
-	TINT iDisplayIndex    = 0;
-	TINT iNumDisplayModes = SDL_GetNumDisplayModes( iDisplayIndex );
-
-	T2Map<TUINT32, TBOOL> mapResolutions;
-	for ( TINT i = 0; i < iNumDisplayModes; i++ )
-	{
-		SDL_DisplayMode displayMode;
-		SDL_GetDisplayMode( iDisplayIndex, i, &displayMode );
-
-		TUINT32 uiHash = Hash_Vec2i( displayMode.w, displayMode.h );
-		if ( mapResolutions.Find( uiHash ) == mapResolutions.End() )
-		{
-			TINFO( "Found new screen resolution (%dx%d)\n", displayMode.w, displayMode.h );
-
-			m_vecResolutions.PushBack( std::move( TString8::VarArgs( "%dx%d", displayMode.w, displayMode.h ) ) );
-			mapResolutions.Insert( uiHash, TTRUE );
-		}
 	}
 }
 
@@ -335,9 +312,4 @@ TBOOL Application::OnUpdate( TFLOAT flDeltaTime )
 	pRender->EndScene();
 
 	return TTRUE;
-}
-
-T2DynamicVector<TString8>& Application::GetScreenResolutions()
-{
-	return m_vecResolutions;
 }

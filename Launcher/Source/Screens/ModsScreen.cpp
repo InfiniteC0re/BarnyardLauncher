@@ -32,7 +32,7 @@ void ModsScreen::Render()
 	ImGuiStyle& style = ImGui::GetStyle();
 	style.Alpha       = GetAnimProgress();
 
-	ImGui::SetCursorPos( ImVec2( 0, 128 ) );
+	ImGui::SetCursorPos( ImVec2( 0, 100 ) );
 
 	ImGui::Text( "List of all mods" );
 	if ( ImGui::BeginTable( "Mods", 3 ) )

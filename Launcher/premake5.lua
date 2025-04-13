@@ -3,6 +3,9 @@ project "BYLauncher"
 	language "C++"
 	staticruntime "on"
 	
+	-- Set debug dir to the Game folder
+	debugdir ("%{wks.location}/../Game")
+	
 	pchheader "pch.h"
 	pchsource "Source/pch.cpp"
 	

@@ -1,6 +1,7 @@
 #include "pch.h"
 #include "MainScreen.h"
 #include "ModsScreen.h"
+#include "SettingsScreen.h"
 #include "Application.h"
 #include "UIScreenControl.h"
 #include "GameSettings.h"
@@ -32,31 +33,6 @@ void MainScreen::Render()
 
 	//ImGui::BeginDisabled( !m_bEnableGameButtons );
 	{
-		/*if ( ImGui::BeginCombo( "Resolution", m_vecResolutions[ m_iSelectedResolution ] ) )
-					{
-						T2_FOREACH( m_vecResolutions, it )
-						{
-							TBOOL bSelected = ( it.Index() == m_iSelectedResolution );
-
-							if ( ImGui::Selectable( it.Get()->GetString(), &bSelected ) )
-								m_iSelectedResolution = it.Index();
-
-							if ( bSelected )
-								ImGui::SetItemDefaultFocus();
-						}
-
-						ImGui::EndCombo();
-					}
-
-					ImGui::Checkbox( "Windowed Mode", &g_oSettings.bWindowed );
-					ImGui::Separator();
-
-					ImGui::Text( "Modloader" );
-					ImGui::Checkbox( "Experimental Mode", &g_oSettings.bExperimental );
-					ImGui::Checkbox( "Fun%", &g_oSettings.bFun );*/
-
-		//ImGui::Begin( "Game Buttons", TNULL, ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove );
-
 		// Draw Control buttons
 		ImGui::PushStyleVar( ImGuiStyleVar_FramePadding, ImVec2( 28.0f, 8.0f ) );
 
@@ -115,19 +91,19 @@ void MainScreen::Button_PlayGame()
 		// Resolution
 		strStartParams.Append( g_oSettings.bWindowed ? L"-windowed " : L"-fullscreen " );
 
-		const TString8& strResolution = g_oTheApp.GetScreenResolutions()[ 0 ];
-		TINT            iDivider      = strResolution.Find( 'x' );
+		//const TString8& strResolution = g_oTheApp.GetScreenResolutions()[ 0 ];
+		//TINT            iDivider      = strResolution.Find( 'x' );
 
-		if ( iDivider != -1 )
+		//if ( iDivider != -1 )
 		{
-			TString8 strWidth  = strResolution.Mid( 0, iDivider );
+			/*TString8 strWidth  = strResolution.Mid( 0, iDivider );
 			TString8 strHeight = strResolution.Right( iDivider + 1 );
 
 			TINT iWidth  = T2String8::StringToInt( strWidth );
-			TINT iHeight = T2String8::StringToInt( strHeight );
+			TINT iHeight = T2String8::StringToInt( strHeight );*/
 
 			T2FormatWString128 resolutionParams;
-			resolutionParams.Format( L"-width %d -height %d ", iWidth, iHeight );
+			resolutionParams.Format( L"-width %d -height %d ", g_oSettings.iWidth, g_oSettings.iHeight );
 
 			strStartParams.Append( resolutionParams.Get() );
 		}
@@ -144,22 +120,18 @@ void MainScreen::Button_PlayGame()
 	gameProcess.Create(
 	    L".\\BYardModLoader.exe",
 	    strStartParams.Get(),
-	    L".\\"
+	    L".\\",
+		Process::Priority_Normal,
+		-1
 	);
 }
 
 void MainScreen::Button_Settings()
 {
-	// Test screen transition
-	MainScreen* pMainScreen = new MainScreen();
-	pMainScreen->EnableGameButtons( !m_bEnableGameButtons );
-	g_oUIControl.ShowScreen( pMainScreen );
-
-	g_oSettings.Save();
+	g_oUIControl.ShowScreen( new SettingsScreen() );
 }
 
 void MainScreen::Button_Mods()
 {
-	ModsScreen* pScreen = new ModsScreen();
-	g_oUIControl.ShowScreen( pScreen );
+	g_oUIControl.ShowScreen( new ModsScreen() );
 }

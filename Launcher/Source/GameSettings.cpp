@@ -25,7 +25,7 @@ GameSettings::~GameSettings()
 
 void GameSettings::Save()
 {
-	std::ofstream fileStream( "BYLauncher.vdf" );
+	std::ofstream fileStream( "Launcher\\BYLauncher.vdf" );
 
 	vdf::object settings;
 	settings.set_name( "BYardLauncher" );
@@ -43,7 +43,7 @@ void GameSettings::Save()
 
 void GameSettings::Load()
 {
-	std::ifstream fileStream( "BYLauncher.vdf" );
+	std::ifstream fileStream( "Launcher\\BYLauncher.vdf" );
 
 	if ( !fileStream.is_open() )
 		return;

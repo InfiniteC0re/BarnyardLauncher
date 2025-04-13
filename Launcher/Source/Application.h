@@ -23,16 +23,12 @@ public:
 	virtual TBOOL OnUpdate( TFLOAT flDeltaTime ) OVERRIDE;
 
 	void LoadResources();
-	void ObtainAllScreenResolutions();
-
-	Toshi::T2DynamicVector<Toshi::TString8>& GetScreenResolutions();
 
 private:
-	Toshi::T2Render::WindowParams           m_oWindowParams;
-	TBOOL                                   m_bHasGame = TFALSE;
-	TBOOL                                   m_bCreatedMainScreen = TFALSE;
-	Toshi::T2DynamicVector<Toshi::TString8> m_vecResolutions;
-	TINT                                    m_iSelectedResolution;
+	Toshi::T2Render::WindowParams m_oWindowParams;
+
+	TBOOL m_bHasGame           = TFALSE;
+	TBOOL m_bCreatedMainScreen = TFALSE;
 
 	Toshi::T2GLTexture m_BackgroundTexture;
 
