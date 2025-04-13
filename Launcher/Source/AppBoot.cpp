@@ -14,7 +14,11 @@
 #include <Toshi/Toshi.h>
 #include <Toshi/TApplication.h>
 #include <Render/T2Render.h>
+#include <Platform/GL/T2GLTexture_GL.h>
 #include <ToshiTools/T2CommandLine.h>
+
+#define STB_IMAGE_IMPLEMENTATION
+#include <stb/stb_image.h>
 
 //-----------------------------------------------------------------------------
 // Enables memory debugging.
@@ -23,6 +27,8 @@
 #include <Core/TMemoryDebugOn.h>
 
 TOSHI_NAMESPACE_USING
+
+#define UI_MAIN_PADDING 28
 
 static struct MemoryInitialiser
 {
@@ -56,15 +62,13 @@ public:
 	virtual TBOOL OnCreate( TINT argc, TCHAR** argv ) OVERRIDE
 	{
 		TApplication::OnCreate( argc, argv );
-
-		T2Render::WindowParams windowParams;
-		windowParams.pchTitle    = "Barnyard Launcher";
-		windowParams.uiWidth     = 500;
-		windowParams.uiHeight    = 260;
-		windowParams.bIsWindowed = TTRUE;
+		m_oWindowParams.pchTitle = "Barnyard Launcher";
+		m_oWindowParams.uiWidth  = 800;
+		m_oWindowParams.uiHeight = 600;
+		m_oWindowParams.bIsWindowed = TTRUE;
 
 		T2Render* pRender        = T2Render::CreateSingleton();
-		TBOOL     bWindowCreated = pRender->Create( windowParams );
+		TBOOL     bWindowCreated = pRender->Create( m_oWindowParams );
 		TASSERT( TTRUE == bWindowCreated );
 
 		T2Window* pWindow = pRender->GetWindow();
@@ -77,7 +81,7 @@ public:
 		io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
 		io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
 
-		io.Fonts->AddFontFromFileTTF( "Bahnschrift.ttf", 17.0f, TNULL, io.Fonts->GetGlyphRangesDefault() );
+		io.Fonts->AddFontFromFileTTF( "C:\\Windows\\Fonts\\segoeui.ttf", 20.0f, TNULL, io.Fonts->GetGlyphRangesDefault() );
 
 		// Setup Dear ImGui style
 		ImGui::StyleColorsDark();
@@ -107,8 +111,8 @@ public:
 		colors[ ImGuiCol_CheckMark ]             = ImVec4( 0.76f, 0.76f, 0.76f, 1.00f );
 		colors[ ImGuiCol_SliderGrab ]            = ImVec4( 0.28f, 0.56f, 1.00f, 1.00f );
 		colors[ ImGuiCol_SliderGrabActive ]      = ImVec4( 0.37f, 0.61f, 1.00f, 1.00f );
-		colors[ ImGuiCol_Button ]                = ImVec4( 0.20f, 0.25f, 0.30f, 1.00f );
-		colors[ ImGuiCol_ButtonHovered ]         = ImVec4( 0.30f, 0.35f, 0.40f, 1.00f );
+		colors[ ImGuiCol_Button ]                = ImVec4( 1.0f, 1.0f, 1.0f, 0.12f );
+		colors[ ImGuiCol_ButtonHovered ]         = ImVec4( 1.0f, 1.0f, 1.0f, 0.16f );
 		colors[ ImGuiCol_ButtonActive ]          = ImVec4( 0.25f, 0.30f, 0.35f, 1.00f );
 		colors[ ImGuiCol_Header ]                = ImVec4( 0.25f, 0.25f, 0.25f, 0.80f );
 		colors[ ImGuiCol_HeaderHovered ]         = ImVec4( 0.30f, 0.30f, 0.30f, 0.80f );
@@ -143,12 +147,13 @@ public:
 		colors[ ImGuiCol_ModalWindowDimBg ]      = ImVec4( 0.80f, 0.80f, 0.80f, 0.35f );
 
 		// Style adjustments
-		style.WindowRounding    = 5.3f;
-		style.FrameRounding     = 2.3f;
+		style.WindowRounding    = 0.0f;
+		style.FrameRounding     = 6.0f;
 		style.ScrollbarRounding = 0;
 
 		style.WindowTitleAlign = ImVec2( 0.50f, 0.50f );
-		style.WindowPadding    = ImVec2( 8.0f, 8.0f );
+		style.WindowPadding    = ImVec2( 0.0f, 0.0f );
+		style.WindowBorderSize = 0.0f;
 		style.FramePadding     = ImVec2( 5.0f, 5.0f );
 		style.ItemSpacing      = ImVec2( 6.0f, 6.0f );
 		style.ItemInnerSpacing = ImVec2( 6.0f, 6.0f );
@@ -167,9 +172,25 @@ public:
 		}
 
 		// Do other preparation things...
+		LoadResources();
 		ObtainAllScreenResolutions();
 
 		return bWindowCreated;
+	}
+
+	void LoadResources()
+	{
+		// Load background image
+		{
+			int width, height, numComponents;
+			TBYTE* pImageData = stbi_load( "Launcher\\Assets\\background.png", &width, &height, &numComponents, 4 );
+
+			m_BackgroundTexture.Create( TEXTURE_FORMAT_R8G8B8A8_UNORM, width, height, pImageData );
+			glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR );
+			glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR );
+
+			stbi_image_free( pImageData );
+		}
 	}
 
 	void ObtainAllScreenResolutions()
@@ -213,19 +234,27 @@ public:
 		ImGui::SetNextWindowSize( imViewport->Size );
 		ImGui::SetNextWindowViewport( imViewport->ID );
 
-		ImGuiWindowFlags window_flags = ImGuiWindowFlags_NoDocking | ImGuiWindowFlags_MenuBar;
+		ImGuiStyle& style = ImGui::GetStyle();
+
+		ImGuiWindowFlags window_flags = ImGuiWindowFlags_NoDocking;
 		window_flags |= ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove;
 		window_flags |= ImGuiWindowFlags_NoBringToFrontOnFocus | ImGuiWindowFlags_NoNavFocus;
 
-		ImGui::PushStyleVar( ImGuiStyleVar_WindowPadding, ImVec2( 0.0f, 0.0f ) );
+		ImGui::PushStyleVar( ImGuiStyleVar_WindowPadding, ImVec2( UI_MAIN_PADDING, UI_MAIN_PADDING ) );
+		ImGui::PushStyleVar( ImGuiStyleVar_WindowBorderSize, 0.0f );
+		ImGui::GetBackgroundDrawList()->AddImage( m_BackgroundTexture.GetHandle(), ImVec2( 0, 0 ), ImVec2( 800, 600 ) );
+		
+		ImGui::PushStyleColor( ImGuiCol_WindowBg, ImVec4( 0.0f, 0.0f, 0.0f, 0.0f ) );
 		ImGui::Begin( "DockSpace", TNULL, window_flags );
 		{
-			ImGui::PopStyleVar();
+			ImGui::PopStyleVar( 2 );
+			//ImGui::Image( m_BackgroundTexture.GetHandle(), ImVec2( 800, 600 ) );
 
 			ImGuiID dockspaceId = ImGui::GetID( "MainDockspace" );
 			ImGui::DockSpace( dockspaceId, ImVec2( 0, 0 ), ImGuiDockNodeFlags_NoTabBar );
 
-			if ( ImGui::BeginMainMenuBar() )
+
+			/*if ( ImGui::BeginMainMenuBar() )
 			{
 				if ( ImGui::BeginMenu( "Visit GitHub" ) )
 				{
@@ -250,23 +279,23 @@ public:
 				}
 
 				ImGui::EndMainMenuBar();
-			}
+			}*/
 
 			ImGui::SetNextWindowDockID( dockspaceId );
 			ImGui::Begin( "Main Window", TNULL, ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove );
 			{
-				if ( !m_bHasGame )
+				/*if ( !m_bHasGame )
 				{
 					ImGui::PushStyleColor( ImGuiCol_Text, ImVec4( 1.0f, 0.0f, 0.0f, 1.00f ) );
 					ImGui::Text( "Error: No game found! Make sure the launcher is in the correct directory!" );
 					ImGui::PopStyleColor();
 				}
 
-				ImGui::Text( "Game Settings" );
+				ImGui::Text( "Game Settings" );*/
 
 				ImGui::BeginDisabled( !m_bHasGame );
 				{
-					if ( ImGui::BeginCombo( "Resolution", m_vecResolutions[ m_iSelectedResolution ] ) )
+					/*if ( ImGui::BeginCombo( "Resolution", m_vecResolutions[ m_iSelectedResolution ] ) )
 					{
 						T2_FOREACH( m_vecResolutions, it )
 						{
@@ -287,9 +316,25 @@ public:
 
 					ImGui::Text( "Modloader" );
 					ImGui::Checkbox( "Experimental Mode", &g_oSettings.bExperimental );
-					ImGui::Checkbox( "Fun%", &g_oSettings.bFun );
+					ImGui::Checkbox( "Fun%", &g_oSettings.bFun );*/
 
-					if ( ImGui::Button( "Play Game" ) )
+					//ImGui::Begin( "Game Buttons", TNULL, ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove );
+					
+					// Draw Control buttons
+					ImGui::PushStyleVar( ImGuiStyleVar_FramePadding, ImVec2( 28.0f, 8.0f ) );
+					
+					ImVec2 region     = ImGui::GetContentRegionAvail();
+					float  flFontSize = ImGui::GetFontSize();
+
+					ImGui::SetCursorPos( ImVec2( 0, region.y - ( flFontSize + style.FramePadding.y * 2 ) - flFontSize * 1.4f ) );
+					
+					ImGui::PushStyleColor( ImGuiCol_Text, m_bHasGame ? ImVec4( 1.0f, 1.0f, 1.0f, 0.4f ) : ImVec4( 1.0f, 0.72f, 0.1f, 1.0f ) );
+					ImGui::Text( m_bHasGame ? "Ready to play!" : "No game found!" );
+					ImGui::PopStyleColor();
+
+					ImGui::SetCursorPos( ImVec2( 0, region.y - ( flFontSize + style.FramePadding.y * 2 ) ) );
+
+					if ( ImGui::Button( "PLAY" ) )
 					{
 						// Create a string with all launch parameters
 						T2FormatWString512 strStartParams;
@@ -330,6 +375,11 @@ public:
 						);
 					}
 
+					ImGui::SameLine();
+					ImGui::Button( "SETTINGS" );
+
+					ImGui::PopStyleVar();
+
 					ImGui::EndDisabled();
 				}
 				
@@ -338,6 +388,8 @@ public:
 
 			ImGui::End();
 		}
+
+		ImGui::PopStyleColor(); // ImGuiCol_WindowBg
 
 		// Render to the window
 		pRender->BeginScene();
@@ -363,9 +415,12 @@ public:
 	}
 
 private:
+	T2Render::WindowParams    m_oWindowParams;
 	TBOOL                     m_bHasGame = TFALSE;
 	T2DynamicVector<TString8> m_vecResolutions;
 	TINT                      m_iSelectedResolution;
+
+	T2GLTexture m_BackgroundTexture;
 
 } g_oTheApp;
 
