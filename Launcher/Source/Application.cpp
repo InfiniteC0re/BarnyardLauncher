@@ -182,6 +182,8 @@ TBOOL Application::OnCreate( TINT argc, TCHAR** argv )
 	LoadResources();
 	ObtainAllScreenResolutions();
 
+	g_oSettings.Load();
+
 	return bWindowCreated;
 }
 

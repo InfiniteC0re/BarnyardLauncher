@@ -25,6 +25,7 @@ workspace "Barnyard Launcher"
 	defines
 	{
 		"_CRT_SECURE_NO_WARNINGS",
+		"NOMINMAX",
 		"TMEMORY_USE_DLMALLOC",
 	--	"TOSHI_PROFILER",
 	--	"TOSHI_PROFILER_MEMORY",

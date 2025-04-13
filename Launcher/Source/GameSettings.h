@@ -2,11 +2,6 @@
 
 struct GameSettingsProperties
 {
-	// Common for all versions:
-	TUINT uiMagic   = TFourCC( "BYLN" );
-	TUINT uiVersion = 1;
-
-	// Version 1:
 	TBOOL bExperimental = TFALSE;
 	TBOOL bFun          = TFALSE;
 	TBOOL bWindowed     = TFALSE;

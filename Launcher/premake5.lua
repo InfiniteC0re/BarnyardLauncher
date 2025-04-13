@@ -12,19 +12,22 @@ project "BYLauncher"
 		"ImGui",
 		"SDL2.lib",
 		"opengl32.lib",
-		"glew32s.lib"
+		"glew32s.lib",
+		"libcurl.dll.lib",
 	}
 	
 	files
 	{
 		"Source/**.h",
 		"Source/**.cpp",
+		"Source/**.hpp"
 	}
 			
 	libdirs
 	{
 		"%{LibDir.sdl2}",
-		"%{LibDir.glew}"
+		"%{LibDir.glew}",
+		"%{LibDir.curl}"
 	}
 
 	includedirs
@@ -34,7 +37,8 @@ project "BYLauncher"
 		"%{IncludeDir.sdl2}",
 		"%{IncludeDir.glm}",
 		"%{IncludeDir.glew}",
-		"%{IncludeDir.imgui}"
+		"%{IncludeDir.imgui}",
+		"%{IncludeDir.curl}"
 	}
 
 	defines

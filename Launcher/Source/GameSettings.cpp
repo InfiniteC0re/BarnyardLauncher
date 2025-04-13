@@ -1,5 +1,6 @@
 #include "pch.h"
 #include "GameSettings.h"
+#include "vdf.hpp"
 
 #include <Toshi/T2String.h>
 #include <Plugins/PTRB.h>
@@ -9,6 +10,8 @@
 // Note: Should be the last include!
 //-----------------------------------------------------------------------------
 #include <Core/TMemoryDebugOn.h>
+
+using namespace tyti;
 
 TOSHI_NAMESPACE_USING
 
@@ -20,60 +23,46 @@ GameSettings::~GameSettings()
 {
 }
 
-
 void GameSettings::Save()
 {
-	PTRB                        outFile;
-	PTRBSections*               pSections  = outFile.GetSections();
-	PTRBSymbols*                pSymbols   = outFile.GetSymbols();
-	PTRBSections::MemoryStream* pMemStream = pSections->CreateStream();
+	std::ofstream fileStream( "BYLauncher.vdf" );
 
-	// Write settings to the stream
-	auto pSettings = pMemStream->Alloc<GameSettingsProperties>();
-	*pSettings     = *this;
+	vdf::object settings;
+	settings.set_name( "BYardLauncher" );
+	settings.attribs[ "experimental" ] = vdf::toString( bExperimental );
+	settings.attribs[ "fun" ]          = vdf::toString( bFun );
+	settings.attribs[ "dxvk" ]         = vdf::toString( bDXVK );
+	settings.attribs[ "windowed" ]     = vdf::toString( bWindowed );
+	settings.attribs[ "width" ]        = vdf::toString( iWidth );
+	settings.attribs[ "height" ]       = vdf::toString( iHeight );
 
-	// Save the file
-	pSymbols->Add( pMemStream, "Settings", pSettings.get() );
-	outFile.WriteToFile( "BYLauncher.trb" );
+	vdf::write( fileStream, settings );
 
 	TINFO( "Saved core settings file\n" );
 }
 
 void GameSettings::Load()
 {
-	TTRB inFile;
+	std::ifstream fileStream( "BYLauncher.vdf" );
 
-	if ( inFile.Load( "BYLauncher.trb" ) == TTRB::ERROR_OK )
-	{
-		TINFO( "Reading core settings file...\n" );
-		GameSettingsProperties* pSettings = inFile.CastSymbol<GameSettingsProperties>( "Settings" );
+	if ( !fileStream.is_open() )
+		return;
 
-		if ( pSettings->uiMagic != TFourCC( "BYLN" ) )
-		{
-			TERROR( "The settings file has wrong signature!\n" );
-			return;
-		}
+	vdf::object settings = vdf::read( fileStream );
 
-		switch ( pSettings->uiVersion )
-		{
-			case 1:
-				bExperimental = pSettings->bExperimental;
-				bFun          = pSettings->bFun;
-				bDXVK         = pSettings->bDXVK;
-				bWindowed     = pSettings->bWindowed;
-				iWidth        = pSettings->iWidth;
-				iHeight       = pSettings->iHeight;
-				break;
-			default:
-				TINFO( "The settings file's version is not supported!\n" );
-				break;
-		}
-	}
+	if ( settings.name != "BYardLauncher" )
+		return;
+
+	bExperimental = vdf::getBool( settings, "experimental", TFALSE );
+	bFun          = vdf::getBool( settings, "fun", TFALSE );
+	bDXVK         = vdf::getBool( settings, "dxvk", TTRUE );
+	bWindowed     = vdf::getBool( settings, "windowed", TFALSE );
+	iWidth        = vdf::getInt( settings, "width", 0 );
+	iHeight       = vdf::getInt( settings, "height", 0 );
 
 	Apply();
 }
 
 void GameSettings::Apply()
 {
-	
 }

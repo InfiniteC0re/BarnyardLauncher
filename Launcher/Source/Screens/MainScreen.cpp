@@ -29,7 +29,7 @@ void MainScreen::Render()
 
 	ImGuiStyle& style = ImGui::GetStyle();
 
-	ImGui::BeginDisabled( !m_bEnableGameButtons );
+	//ImGui::BeginDisabled( !m_bEnableGameButtons );
 	{
 		/*if ( ImGui::BeginCombo( "Resolution", m_vecResolutions[ m_iSelectedResolution ] ) )
 					{
@@ -75,58 +75,23 @@ void MainScreen::Render()
 		ImGui::SetCursorPos( ImVec2( 0, region.y - ( flFontSize + style.FramePadding.y * 2 ) ) );
 
 		if ( ImGui::Button( "PLAY" ) )
-		{
-			// Create a string with all launch parameters
-			T2FormatWString512 strStartParams;
-			{
-				// Resolution
-				strStartParams.Append( g_oSettings.bWindowed ? L"-windowed " : L"-fullscreen " );
-
-				const TString8& strResolution = g_oTheApp.GetScreenResolutions()[ 0 ];
-				TINT            iDivider      = strResolution.Find( 'x' );
-
-				if ( iDivider != -1 )
-				{
-					TString8 strWidth  = strResolution.Mid( 0, iDivider );
-					TString8 strHeight = strResolution.Right( iDivider + 1 );
-
-					TINT iWidth  = T2String8::StringToInt( strWidth );
-					TINT iHeight = T2String8::StringToInt( strHeight );
-
-					T2FormatWString128 resolutionParams;
-					resolutionParams.Format( L"-width %d -height %d ", iWidth, iHeight );
-
-					strStartParams.Append( resolutionParams.Get() );
-				}
-
-				// Other parameters
-				if ( g_oSettings.bExperimental )
-					strStartParams.Append( L"-experimental " );
-
-				if ( g_oSettings.bFun )
-					strStartParams.Append( L"-fun " );
-			}
-
-			Process gameProcess;
-			gameProcess.Create(
-			    L".\\BYardModLoader.exe",
-			    strStartParams.Get(),
-			    L".\\"
-			);
-		}
+			Button_PlayGame();
 
 		ImGui::SameLine();
 		if ( ImGui::Button( "SETTINGS" ) )
-		{
-			// Test screen transition
-			MainScreen* pMainScreen = new MainScreen();
-			pMainScreen->EnableGameButtons( TFALSE );
-			g_oUIControl.ShowScreen( pMainScreen );
-		}
+			Button_Settings();
 
-		ImGui::PopStyleVar();
+		ImGui::SameLine();
+		ImGui::Button( "MANAGE MODS" );
 
-		ImGui::EndDisabled();
+
+		ImGui::SameLine();
+		if ( ImGui::Button( "TOGGLE STATE" ) )
+			m_bEnableGameButtons = !m_bEnableGameButtons;
+		
+		ImGui::PopStyleVar(); // ImGuiStyleVar_FramePadding
+		//ImGui::EndDisabled();
+
 	}
 }
 
@@ -138,4 +103,55 @@ void MainScreen::Update( TFLOAT flDeltaTime )
 void MainScreen::EnableGameButtons( TBOOL bEnable )
 {
 	m_bEnableGameButtons = bEnable;
+}
+
+void MainScreen::Button_PlayGame()
+{
+	// Create a string with all launch parameters
+	T2FormatWString512 strStartParams;
+	{
+		// Resolution
+		strStartParams.Append( g_oSettings.bWindowed ? L"-windowed " : L"-fullscreen " );
+
+		const TString8& strResolution = g_oTheApp.GetScreenResolutions()[ 0 ];
+		TINT            iDivider      = strResolution.Find( 'x' );
+
+		if ( iDivider != -1 )
+		{
+			TString8 strWidth  = strResolution.Mid( 0, iDivider );
+			TString8 strHeight = strResolution.Right( iDivider + 1 );
+
+			TINT iWidth  = T2String8::StringToInt( strWidth );
+			TINT iHeight = T2String8::StringToInt( strHeight );
+
+			T2FormatWString128 resolutionParams;
+			resolutionParams.Format( L"-width %d -height %d ", iWidth, iHeight );
+
+			strStartParams.Append( resolutionParams.Get() );
+		}
+
+		// Other parameters
+		if ( g_oSettings.bExperimental )
+			strStartParams.Append( L"-experimental " );
+
+		if ( g_oSettings.bFun )
+			strStartParams.Append( L"-fun " );
+	}
+
+	Process gameProcess;
+	gameProcess.Create(
+	    L".\\BYardModLoader.exe",
+	    strStartParams.Get(),
+	    L".\\"
+	);
+}
+
+void MainScreen::Button_Settings()
+{
+	// Test screen transition
+	MainScreen* pMainScreen = new MainScreen();
+	pMainScreen->EnableGameButtons( !m_bEnableGameButtons );
+	g_oUIControl.ShowScreen( pMainScreen );
+
+	g_oSettings.Save();
 }

@@ -12,6 +12,7 @@ IncludeDir.detours = "%{wks.location}/OpenBarnyard/SDK/Vendor/Detours/include"
 IncludeDir.glm = "%%{wks.location}/OpenBarnyard/Toshi/Vendor/glm/include"
 IncludeDir.glew = "%{wks.location}/OpenBarnyard/Toshi/Vendor/glew/include"
 IncludeDir.sdl2 = "%{wks.location}/OpenBarnyard/Toshi/Vendor/sdl2/include"
+IncludeDir.curl = "%{wks.location}/OpenBarnyard/Toshi/Vendor/curl/include"
 IncludeDir.toshi = "%{wks.location}/OpenBarnyard/Toshi/Source"
 IncludeDir.imgui = "%{wks.location}/ThirdParty/ImGui"
 
@@ -22,6 +23,7 @@ LibDir.bink = "%{wks.location}/OpenBarnyard/Toshi/Vendor/bink/lib"
 LibDir.detours = "%{wks.location}/OpenBarnyard/SDK/Vendor/Detours/lib"
 LibDir.glew = "%{wks.location}/OpenBarnyard/Toshi/Vendor/glew/lib"
 LibDir.sdl2 = "%{wks.location}/OpenBarnyard/Toshi/Vendor/sdl2/lib"
+LibDir.curl = "%{wks.location}/OpenBarnyard/Toshi/Vendor/curl/lib"
 
 -- content of these folders should be copied to any client application
 ClientContentCommon = "%{wks.location}/OpenBarnyardContent/Common/"
