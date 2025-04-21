@@ -4,6 +4,9 @@
 // We don't need any other header files of the ModCore to be in the list of includes
 #include <../../OpenBarnyard/SDK/BYModCore/Include/ModLoader.h>
 
+#include <ToshiTools/json.hpp>
+
+#include <curl/curl.h>
 #include <filesystem>
 
 //-----------------------------------------------------------------------------
@@ -14,7 +17,33 @@
 
 TOSHI_NAMESPACE_USING
 
+static CURL*                            s_pCurl;
 static T2DynamicVector<ModManager::Mod> s_vecMods;
+
+static size_t CURLWriteCallback( void* contents, size_t size, size_t nmemb, void* userp )
+{
+	( (std::string*)userp )->append( (char*)contents, size * nmemb );
+	return size * nmemb;
+}
+
+void ModManager::Initialise()
+{
+	curl_global_init( CURL_GLOBAL_DEFAULT );
+
+	s_pCurl = curl_easy_init();
+
+	if ( !s_pCurl )
+	{
+		TERROR( "curl_easy_init() returned null pointer\n" );
+		return;
+	}
+
+	curl_easy_setopt( s_pCurl, CURLOPT_SSL_VERIFYPEER, 0L );
+	curl_easy_setopt( s_pCurl, CURLOPT_SSL_VERIFYHOST, 0L );
+	curl_easy_setopt( s_pCurl, CURLOPT_CA_CACHE_TIMEOUT, 604800L );
+	curl_easy_setopt( s_pCurl, CURLOPT_WRITEFUNCTION, CURLWriteCallback );
+	curl_easy_setopt( s_pCurl, CURLOPT_FOLLOWLOCATION, TRUE );
+}
 
 void ModManager::ScanForMods()
 {
@@ -28,9 +57,9 @@ void ModManager::ScanForMods()
 			auto    fnGetName             = TREINTERPRETCAST( t_GetModName, GetProcAddress( hModule, "GetModName" ) );
 
 			// Obtain the update url
-			TString8 updateInfoURL = fnGetModAutoUpdateURL ? fnGetModAutoUpdateURL() : "";
+			TString8 updateInfoURL = ( fnGetModAutoUpdateURL ) ? fnGetModAutoUpdateURL() : "";
 			TString8 strModName    = ( fnGetName ) ? fnGetName() : "Unknown Mod";
-			TVersion modVersion    = fnGetVersion ? fnGetVersion() : TVERSION( 1, 0 );
+			TVersion modVersion    = ( fnGetVersion ) ? fnGetVersion() : TVERSION( 1, 0 );
 
 			// We don't need the dll to be attached anymore
 			FreeLibrary( hModule );
@@ -42,6 +71,7 @@ void ModManager::ScanForMods()
 			mod->strAutoUpdateURL = updateInfoURL;
 			mod->strDllPath       = Toshi::Platform_UnicodeToUTF8( entry.path().native().c_str() );
 			mod->uiVersion        = modVersion;
+			mod->bAutoUpdates     = updateInfoURL && fnGetVersion;
 
 			//UpdateManager::VersionInfo versionInfo;
 			//TBOOL                      bOutDated = UpdateManager::CheckVersion( updateInfoURL.GetString(), modVersion, &versionInfo );
@@ -117,6 +147,72 @@ void ModManager::ScanForMods()
 			//	}
 			//}
 		}
+	}
+}
+
+struct VersionInfo
+{
+	Toshi::TVersion uiVersion;
+	Toshi::TString8 strUpdateUrl;
+};
+
+static TBOOL CheckVersion( Toshi::T2StringView strUpdateInfoUrl, Toshi::TVersion uiCurrentVersion, VersionInfo* pOutVersionInfo )
+{
+	std::string responseBuffer;
+	curl_easy_setopt( s_pCurl, CURLOPT_WRITEDATA, &responseBuffer );
+	curl_easy_setopt( s_pCurl, CURLOPT_URL, strUpdateInfoUrl.Get() );
+
+	// Do the request
+	CURLcode res = curl_easy_perform( s_pCurl );
+	if ( res != CURLE_OK ) return TFALSE;
+
+	// Parse json
+	nlohmann::json json;
+	try
+	{
+		json = json.parse( responseBuffer );
+	}
+	catch (...)
+	{
+		TERROR( "Error parsing JSON response from URL: %s\n", strUpdateInfoUrl.Get() );
+		return TFALSE;
+	}
+
+	if ( json.is_null() || !json.is_object() )
+		return TFALSE;
+
+	auto version = json.find( "version" );
+	auto latest  = json.find( "latest" );
+
+	if ( version == json.end() || latest == json.end() ) return TFALSE;
+	if ( !version->is_array() || !latest->is_string() ) return TFALSE;
+
+	if ( version->size() != 2 || !version->at( 0 ).is_number_integer() || !version->at( 1 ).is_number_integer() )
+		return TFALSE;
+
+	TVersion latestVersion = TVERSION( version->at( 0 ).get<TINT>(), version->at( 1 ).get<TINT>() );
+
+	if ( pOutVersionInfo )
+	{
+		pOutVersionInfo->uiVersion    = latestVersion;
+		pOutVersionInfo->strUpdateUrl = latest->get<std::string>().c_str();
+	}
+
+	return ( uiCurrentVersion.Parts.Major < latestVersion.Parts.Major || uiCurrentVersion.Parts.Minor < latestVersion.Parts.Minor );
+}
+
+
+void ModManager::CheckForUpdates()
+{
+	TINFO( "Ckecking for updates...\n" );
+
+	T2_FOREACH( s_vecMods, it )
+	{
+		if ( !it->bAutoUpdates )
+			continue;
+		
+		VersionInfo versionInfo;
+		CheckVersion( it->strAutoUpdateURL.GetString(), it->uiVersion, &versionInfo );
 	}
 }
 

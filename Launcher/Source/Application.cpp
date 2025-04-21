@@ -182,7 +182,10 @@ TBOOL Application::OnCreate( TINT argc, TCHAR** argv )
 	// Do other preparation things...
 	LoadResources();
 
+	ModManager::Initialise();
 	ModManager::ScanForMods();
+	ModManager::CheckForUpdates();
+
 	g_oSettings.Load();
 
 	return bWindowCreated;
