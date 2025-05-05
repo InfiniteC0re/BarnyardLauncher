@@ -7,6 +7,12 @@
 #include <ToshiTools/json.hpp>
 
 #include <curl/curl.h>
+#include <mz.h>
+#include <mz_zip.h>
+#include <mz_strm.h>
+#include <mz_strm_os.h>
+#include <mz_zip_rw.h>
+
 #include <filesystem>
 
 //-----------------------------------------------------------------------------
@@ -47,6 +53,24 @@ void ModManager::Initialise()
 
 void ModManager::ScanForMods()
 {
+	//{
+	//	void* pZIP = mz_zip_reader_create();
+
+	//	TINT32 iZipOpenRes = mz_zip_reader_open_file_in_memory( pZIP, "C:\\Users\\InfiniteC0re\\Downloads\\Toshi Binaries.zip" );
+
+	//	if ( iZipOpenRes != MZ_OK )
+	//	{
+	//		TERROR( "Unable to open ZIP file (Result: %d)\n", iZipOpenRes );
+	//		return;
+	//	}
+
+	//	TINT32 iSaveRes = mz_zip_reader_save_all( pZIP, ".\\Test" );
+	//	//mz_zip_reader_unzip_cd()
+
+	//	mz_zip_reader_close( pZIP );
+	//	mz_zip_delete( &pZIP );
+	//}
+
 	for ( const auto& entry : std::filesystem::directory_iterator( "Mods\\" ) )
 	{
 		if ( entry.path().extension().compare( L".dll" ) == 0 )

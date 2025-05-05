@@ -1,7 +1,7 @@
 project "BYLauncher"
 	kind "ConsoleApp"
 	language "C++"
-	staticruntime "on"
+	staticruntime "off"
 	
 	-- Set debug dir to the Game folder
 	debugdir ("%{wks.location}/../Game")
@@ -17,6 +17,12 @@ project "BYLauncher"
 		"opengl32.lib",
 		"glew32s.lib",
 		"libcurl.dll.lib",
+		"bzip2.lib",
+		"minizip.lib",
+		"lzma.lib",
+		"zlibstatic-ng.lib",
+		"zstd_static.lib",
+		"bcrypt.lib"
 	}
 	
 	files
@@ -30,7 +36,8 @@ project "BYLauncher"
 	{
 		"%{LibDir.sdl2}",
 		"%{LibDir.glew}",
-		"%{LibDir.curl}"
+		"%{LibDir.curl}",
+		"%{LibDir.minizip}"
 	}
 
 	includedirs
@@ -41,7 +48,8 @@ project "BYLauncher"
 		"%{IncludeDir.glm}",
 		"%{IncludeDir.glew}",
 		"%{IncludeDir.imgui}",
-		"%{IncludeDir.curl}"
+		"%{IncludeDir.curl}",
+		"%{IncludeDir.minizip}"
 	}
 
 	defines
